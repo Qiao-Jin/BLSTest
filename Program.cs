@@ -31,12 +31,12 @@ namespace BLSTest
             return m;
         }
 
-        private static uint getLCM (uint m, uint n)
+        private static uint getLCM(uint m, uint n)
         {
             return m * (n / getGCD(m, n));
         }
 
-        private static uint getLCM (uint[] input)
+        private static uint getLCM(uint[] input)
         {
             if (input == null || input.Length == 0) return 0;
             if (input.Length == 1) return input[0];
@@ -53,7 +53,7 @@ namespace BLSTest
             List<uint> convertedInput = new List<uint>();
             for (uint i = 0; i < input.Length; i++)
             {
-                if (input[i])convertedInput.Add(i + 1);
+                if (input[i]) convertedInput.Add(i + 1);
             }
             return getCoefficient(convertedInput.ToArray());
         }
@@ -64,7 +64,7 @@ namespace BLSTest
             Array.Sort(input);
             uint product = input[0];
             if (product == 0) return null;
-            for(int i = 1; i < input.Length; i++)
+            for (int i = 1; i < input.Length; i++)
             {
                 if (input[i] == 0 || input[i - 1] == input[i]) return null;
                 product *= input[i];
@@ -227,7 +227,7 @@ namespace BLSTest
             }
             Console.WriteLine("Shared private keys calculated...");
 
-            //Aggregate public keys according to shared private keys
+            //Calculate public keys of shared private keys, from published public keys
             byte[][][] publicKeysAggregated = new byte[n][][];//to, from, data
             for (int i = 0; i < n; i++)
             {
@@ -382,7 +382,7 @@ namespace BLSTest
                 {
                     signatures[fractions[i][j].id].CopyTo(rawSignatures.Slice(BLSHerumi.SignatureLength * j));
                     weights[j] = (int)(fractions[i][j].numerator * (overallLCM / fractions[i][j].denominator));
-                    if (!fractions[i][j].sign) weights[j] = - weights[j];
+                    if (!fractions[i][j].sign) weights[j] = -weights[j];
                 }
                 finalSignatures[i] = new byte[BLSHerumi.SignatureLength];
                 using var blsAggregate = new BLSHerumi(new BLSParameters());
