@@ -138,16 +138,17 @@ namespace Cortex.Cryptography
         /// Combines the provided public keys into a single public key value.
         /// </summary>
         /// <param name="publicKeys">Byte span of concatenated public key bytes; must be a multiple of the public key length.</param>
+        /// <param name="weights">weights of this public keys</param>
         /// <param name="destination">Span to write the combined public key to.</param>
         /// <param name="bytesWritten">Output the number of bytes written.</param>
         /// <returns>true if the public key aggregation was successful; false if the destination is not large enough to hold the result</returns>
-        public abstract bool TryAggregatePublicKeys(ReadOnlySpan<byte> publicKeys, Span<byte> destination, out int bytesWritten);
+        public abstract bool TryAggregatePublicKeys(ReadOnlySpan<byte> publicKeys, ReadOnlySpan<uint> weights, Span<byte> destination, out int bytesWritten);
 
         /// <summary>
         /// Combines the provided signatures into a single signature value.
         /// </summary>
         /// <param name="signatures">Byte span of concatenated signature bytes; must be a multiple of the signature length.</param>
-        /// <param name="weights">weight of this signature</param>
+        /// <param name="weights">weights of this signatures</param>
         /// <param name="destination">Span to write the combined signature to.</param>
         /// <param name="bytesWritten">Output the number of bytes written.</param>
         /// <returns>true if the signature aggregation was successful; false if the destination is not large enough to hold the result</returns>

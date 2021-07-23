@@ -75,7 +75,7 @@ namespace Cortex.Cryptography
             _publicKey = parameters.PublicKey?.AsSpan().ToArray();
         }
 
-        public override bool TryAggregatePublicKeys(ReadOnlySpan<byte> publicKeys, Span<byte> destination, out int bytesWritten)
+        public override bool TryAggregatePublicKeys(ReadOnlySpan<byte> publicKeys, ReadOnlySpan<uint> weights, Span<byte> destination, out int bytesWritten)
         {
             // This is independent of the keys set, although other parameters (type of curve, variant, scheme, etc) are relevant.
 
@@ -109,14 +109,15 @@ namespace Cortex.Cryptography
                 {
                     throw new Exception($"Error deserializing BLS public key, length: {publicKeyBytesRead}");
                 }
-                if (index == 0)
+                uint weight = weights[index / PublicKeyLength];
+                if (weight > 0)
                 {
-                    aggregateBlsPublicKey = blsPublicKey;
+                    for (int i = 0; i < weight; i++)
+                    {
+                        Bls384Interop.PublicKeyAdd(ref aggregateBlsPublicKey, ref blsPublicKey);
+                    }
                 }
-                else
-                {
-                    Bls384Interop.PublicKeyAdd(ref aggregateBlsPublicKey, ref blsPublicKey);
-                }
+                else continue;
             }
 
             unsafe
