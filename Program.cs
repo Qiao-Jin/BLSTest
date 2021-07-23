@@ -162,6 +162,48 @@ namespace BLSTest
             return (int)(Math.Log2(n * ((long)Math.Pow(n, m) - 1) / (n - 1) + 1) + 3);
         }
 
+        private static List<Fraction[]> getAllFractions(uint n, uint m)
+        {
+            List<Fraction[]> fractions = new List<Fraction[]>();
+            if (m == 0 || n == 0 || m > n)
+            {
+                return fractions;
+            }
+            bool[] comp = new bool[n];
+            int q = 0;
+            for (; q < m; q++)
+            {
+                comp[q] = true;
+            }
+            fractions.Add(getCoefficient(comp));
+
+            while (true)
+            {
+                for (q = 0; q < n - 1; q++)
+                {
+                    if (comp[q] == true && comp[q + 1] == false) break;
+                }
+                if (q == n - 1) break;
+                comp[q] = false;
+                comp[q + 1] = true;
+
+                int p = 0;
+                while (p < q)
+                {
+                    while (p < n - 1 && comp[p] == true) p++;
+                    while (q > 0 && comp[q] == false) q--;
+                    if (p < q)
+                    {
+                        comp[p] = true;
+                        comp[q] = false;
+                    }
+                }
+                fractions.Add(getCoefficient(comp));
+            }
+
+            return fractions;
+        }
+
         private static void aggregateSignature(uint n, uint m)
         {
             //Filter
@@ -321,38 +363,7 @@ namespace BLSTest
             Console.WriteLine("Signature created and verified...");
 
             //Get coefficients for all possible combinations of consensus nodes
-            List<Fraction[]> fractions = new List<Fraction[]>();
-            bool[] comp = new bool[n];
-            int q = 0;
-            for (; q < m; q++)
-            {
-                comp[q] = true;
-            }
-            fractions.Add(getCoefficient(comp));
-
-            while (true)
-            {
-                for (q = 0; q < n - 1; q++)
-                {
-                    if (comp[q] == true && comp[q + 1] == false) break;
-                }
-                if (q == n - 1) break;
-                comp[q] = false;
-                comp[q + 1] = true;
-
-                int p = 0;
-                while (p < q)
-                {
-                    while (p < n - 1 && comp[p] == true) p++;
-                    while (q > 0 && comp[q] == false) q--;
-                    if (p < q)
-                    {
-                        comp[p] = true;
-                        comp[q] = false;
-                    }
-                }
-                fractions.Add(getCoefficient(comp));
-            }
+            List<Fraction[]> fractions = getAllFractions(n, m);
             Console.WriteLine("Coefficients for all possible consensus node combinations calculated: " + fractions.Count);
 
             //Get LCM
