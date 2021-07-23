@@ -262,7 +262,7 @@ namespace BLSTest
                     using var blsVerify = new BLSHerumi(aggregatePublicKeyParameters);
                     if (!blsVerify.VerifyHash(sharedMessageHash, signature, domain))
                     {
-                        throw new Exception("SharedPrivateKeys Verification failed!");
+                        throw new Exception("SharedPrivateKeys verification failed!");
                     }
                 }
             }
@@ -315,7 +315,7 @@ namespace BLSTest
                 using var blsVerify = new BLSHerumi(aggregatePublicKeyParameters);
                 if (!blsVerify.VerifyHash(sharedMessageHash, signatures[i], domain))
                 {
-                    throw new Exception("AggregatePrivateKeys Verification failed!");
+                    throw new Exception("AggregatePrivateKeys verification failed!");
                 }
             }
             Console.WriteLine("Signature created and verified...");
@@ -389,7 +389,7 @@ namespace BLSTest
                 blsAggregate.TryAggregateSignatures(rawSignatures, weights, finalSignatures[i], out var _);
                 if ((i + 1) % 10 == 0)
                 {
-                    Console.WriteLine("Have calculated " + (i + 1) + " signatures with " + watch.Elapsed.TotalSeconds + " s...");
+                    Console.WriteLine("Have calculated to " + (i + 1) + " signatures with another " + watch.Elapsed.TotalSeconds + " s...");
                     watch.Restart();
                 }
             }
