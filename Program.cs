@@ -108,6 +108,8 @@ namespace BLSTest
         private static byte[] generatePrivateKey(int bits)
         {
             int bytes = bits / 8;
+            int ints = bytes / sizeof(int);
+            int start = ints * sizeof(int);
             int remainder = bits % 8;
             if (bytes >= BLSHerumi.PrivateKeyLength - 1)
             {
@@ -115,14 +117,12 @@ namespace BLSTest
             }
 
             Random rand = new Random();
-            byte[] privateKey = new byte[0];
-            for (int i = 0; i < BLSHerumi.PrivateKeyLength / sizeof(int); i++)
+            byte[] privateKey = new byte[ints * sizeof(int)];//In case that aggregated private keys surpass limit
+            for (int i = 0; i < BLSHerumi.PrivateKeyLength / sizeof(int) - ints; i++)
             {
                 privateKey = privateKey.Concat(BitConverter.GetBytes(rand.Next())).ToArray();
             }
-
-            //In case that aggregated private keys surpass limit
-            for (int i = 0; i < bytes; i++)
+            for (int i = start; i < bytes; i++)
             {
                 privateKey[i] = 0;
             }
@@ -156,6 +156,11 @@ namespace BLSTest
             return result;
         }
 
+        private static int getZeroBits(uint n, uint m)
+        {
+            return (int)(Math.Log2(n * ((long)Math.Pow(n, m) - 1) / (n - 1) + 1) + 3);
+        }
+
         private static void aggregateSignature(uint n, uint m)
         {
             //Filter
@@ -165,8 +170,7 @@ namespace BLSTest
             //Initiate
             var sharedMessageHash = MessageHashes[1];
             var domain = Domains[1];
-            long amplifier = n * ((long)Math.Pow(n, m) - 1) / (n - 1) + 1;
-            int bits = (int)(Math.Log2(amplifier) + 3);
+            int bits = getZeroBits(n, m);
             byte[][][] privateKeys = new byte[n][][];//node, serial, data
             for (int i = 0; i < n; i++)
             {
