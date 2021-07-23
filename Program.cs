@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace BLSTest
 {
-    class Fraction
+    public class Fraction
     {
         //Coefficients
         public uint numerator;
@@ -113,6 +113,7 @@ namespace BLSTest
             {
                 throw new ArithmeticException("Cannot generate private keys!");
             }
+
             Random rand = new Random();
             byte[] privateKey = new byte[0];
             for (int i = 0; i < BLSHerumi.PrivateKeyLength / sizeof(int); i++)
@@ -155,7 +156,7 @@ namespace BLSTest
             return result;
         }
 
-        private static void AggregateSignature(uint n, uint m)
+        private static void aggregateSignature(uint n, uint m)
         {
             //Filter
             if (m == 0 || n == 0 || m > n) return;
@@ -414,7 +415,7 @@ namespace BLSTest
 
         public static void Main()
         {
-            AggregateSignature(7, 5);
+            aggregateSignature(7, 5);
         }
     }
 }
