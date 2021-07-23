@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="Cortex.Cryptography.Bls\Cortex.Cryptography.Bls.csproj" />
+    <ProjectReference Include="..\Cortex.Cryptography.Bls\Cortex.Cryptography.Bls.csproj" />
   </ItemGroup>
 
 </Project>

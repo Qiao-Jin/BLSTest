@@ -17,7 +17,7 @@ namespace BLSTest
         public uint id;
     }
 
-    public class Program
+    public class BLSTest
     {
         private static uint getGCD(uint m, uint n)
         {
