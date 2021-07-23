@@ -1,6 +1,7 @@
 ﻿using Cortex.Cryptography;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace BLSTest
@@ -164,7 +165,10 @@ namespace BLSTest
         private static void aggregateSignature(uint n, uint m)
         {
             //Filter
-            if (m == 0 || n == 0 || m > n) return;
+            if (m == 0 || n == 0 || m > n)
+            {
+                throw new ArithmeticException("Input not valid!");
+            }
             Console.WriteLine("Input checked...");
 
             //Initiate
@@ -349,7 +353,7 @@ namespace BLSTest
                 }
                 fractions.Add(getCoefficient(comp));
             }
-            Console.WriteLine("Coefficients for all possible consensus node combinations calculated...");
+            Console.WriteLine("Coefficients for all possible consensus node combinations calculated: " + fractions.Count);
 
             //Get LCM
             int count = fractions.Count;
@@ -364,10 +368,12 @@ namespace BLSTest
                 LCMs[i] = getLCM(denominators);
             }
             uint overallLCM = getLCM(LCMs);
-            Console.WriteLine("LCM calculated...");
+            Console.WriteLine("LCM calculated, result = " + overallLCM);
 
             //Calculate final signature
             byte[][] finalSignatures = new byte[count][];
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
             for (int i = 0; i < count; i++)
             {
                 var rawSignatures = new Span<byte>(new byte[BLSHerumi.SignatureLength * fractions[i].Length]);
@@ -381,8 +387,13 @@ namespace BLSTest
                 finalSignatures[i] = new byte[BLSHerumi.SignatureLength];
                 using var blsAggregate = new BLSHerumi(new BLSParameters());
                 blsAggregate.TryAggregateSignatures(rawSignatures, weights, finalSignatures[i], out var _);
+                if ((i + 1) % 10 == 0)
+                {
+                    Console.WriteLine("Have calculated " + (i + 1) + " signatures with " + watch.Elapsed.TotalSeconds + " s...");
+                    watch.Restart();
+                }
             }
-            Console.WriteLine("Final signature calculated...");
+            Console.WriteLine("All final signature calculated...");
 
             //Check final signature
             for (int i = 1; i < count; i++)
