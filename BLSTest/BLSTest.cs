@@ -114,7 +114,7 @@ namespace BLSTest
             int remainder = bits % 8;
             if (bytes >= BLSHerumi.PrivateKeyLength - 1)
             {
-                throw new ArithmeticException("Cannot generate private keys!");
+                throw new ArithmeticException("Cannot generate private key!");
             }
 
             Random rand = new Random();
@@ -325,7 +325,7 @@ namespace BLSTest
             }
             Console.WriteLine("Private keys used for signature aggregated...");
 
-            //Aggregate public keys which are used to verify signatures 
+            //Aggregate public keys which are used to verify signatures
             byte[][] publicKeysAggregatedForSignature = new byte[n][];
             for (int i = 0; i < n; i++)
             {
