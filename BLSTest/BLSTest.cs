@@ -343,7 +343,7 @@ namespace BLSTest
                     weightSet[k] = 1u;
                 }
                 aggregatePrivateKeys[i] = aggregatePrivateKey(privateKeySet, weightSet);
-                Console.WriteLine("[" + i + "] : 0x"+ BitConverter.ToString(aggregatePrivateKeys[i]).Replace("-", ""));
+                Console.WriteLine("[" + i + "]: 0x"+ BitConverter.ToString(aggregatePrivateKeys[i]).Replace("-", ""));
             }
             Console.WriteLine("Private keys used for signature aggregated...");
 
@@ -364,7 +364,7 @@ namespace BLSTest
                 using var blsAggregateKeys = new BLSHerumi(new BLSParameters());
                 publicKeysAggregatedForSignature[i] = new byte[BLSHerumi.PublicKeyLength];
                 blsAggregateKeys.TryAggregatePublicKeys(contractedPublicKeys, weightSet, publicKeysAggregatedForSignature[i], out var _);
-                Console.WriteLine("[" + i + "] : 0x" + BitConverter.ToString(publicKeysAggregatedForSignature[i]).Replace("-", ""));
+                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(publicKeysAggregatedForSignature[i]).Replace("-", ""));
             }
             Console.WriteLine("Public keys used to verify signatures aggregated...");
 
@@ -378,7 +378,7 @@ namespace BLSTest
                 using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = aggregatePrivateKeys[i] });
                 signatures[i] = new byte[BLSHerumi.SignatureLength];
                 _ = blsSign.TrySignHash(sharedMessageHash, signatures[i].AsSpan(), out var _, domain);
-                Console.WriteLine("Signature of node [" + i + "] : 0x" + BitConverter.ToString(signatures[i]).Replace("-", ""));
+                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(signatures[i]).Replace("-", ""));
                 var aggregatePublicKeyParameters = new BLSParameters()
                 {
                     PublicKey = publicKeysAggregatedForSignature[i]
