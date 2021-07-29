@@ -177,7 +177,6 @@ namespace BLSTest
                     Console.WriteLine("[" + j + "]: 0x" + BitConverter.ToString(sharedPrivateKeys[i][j]).Replace("-", ""));
                 }
             }
-            sharedPrivateKeys[0][0][3] = 0x00; 
             return sharedPrivateKeys;
             //Console.WriteLine("Shared private keys calculated...");
         }
@@ -307,7 +306,7 @@ namespace BLSTest
                 using var blsVerify = new BLSHerumi(aggregatePublicKeyParameters);
                 if (!blsVerify.VerifyHash(MessageHashes[1], signatures[i], Domains[3]))
                 {
-                    //throw new Exception("AggregatePrivateKeys verification failed!");
+                    throw new Exception("AggregatePrivateKeys verification failed!");
                 }
             }
             return signatures;
@@ -356,7 +355,7 @@ namespace BLSTest
 
                 Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(finalSignatures[i]).Replace("-", ""));
             }
-            //VerifyFinalSignature(count, overallLCM, finalSignatures);
+            VerifyFinalSignature(count, overallLCM, finalSignatures);
             return finalSignatures;
         }
 
