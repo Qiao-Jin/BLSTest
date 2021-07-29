@@ -20,12 +20,8 @@ namespace BLSTest
     {
         private readonly uint n = 0;
         private readonly uint m = 0;
-        //List<byte[][]> publicKeysAggregated = new List<byte[][]>();//to, from, data;
         private readonly uint[][] commonWeightSet;
-        private byte[][][] publicKeysPublished ;//node, serial, data
-        //List<byte[][]> sharedPrivateKeys = new List<byte[][]>();//to, from, data
-        //List<byte[]> aggregatePrivateKeys = new List<byte[]>();
-        //List<byte[]> finalSignatures = new List<byte[]>();
+        private byte[][][] publicKeysPublished;//node, serial, data
 
         private static IList<byte[]> Domains => new List<byte[]>
         {
@@ -132,10 +128,6 @@ namespace BLSTest
                 }
             }
 
-            for (int i = 0; i < this.n; i++)
-            {
-                
-            }
             return privateKeys;
         }
 
@@ -223,6 +215,7 @@ namespace BLSTest
             Console.WriteLine("\n\n-----------------------------");
             Console.WriteLine("Sign & verify sharedPrivateKeys");
             Console.WriteLine("-----------------------------\n");
+
             for (int i = 0; i < n; i++)
             {
                 for (int j = 0; j < n; j++)
@@ -366,7 +359,6 @@ namespace BLSTest
             }
             VerifyFinalSignature(count, overallLCM, finalSignatures);
             return finalSignatures;
-            //Console.WriteLine("All final signature calculated...");
         }
 
         public void VerifyFinalSignature(int count, uint lcm, byte[][] finalSignatures)
@@ -420,9 +412,6 @@ namespace BLSTest
             var signatures = blstest.GetSignatures(aggregatePrivateKeys, publicKeysAggregatedForSignature);
 
             var finalSignatures = blstest.GetFinalSignatures(signatures);
-
-
-
         }
     }
 }
