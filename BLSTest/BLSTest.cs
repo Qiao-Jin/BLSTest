@@ -1,4 +1,4 @@
-﻿using Cortex.Cryptography;
+using Cortex.Cryptography;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,88 +6,22 @@ using System.Linq;
 
 namespace BLSTest
 {
-    public class Fraction
+    public struct Fraction
     {
         //Coefficients
         public uint numerator;
         public uint denominator;
         public bool sign;
-
         //ID
         public uint id;
     }
 
     public class BLSTest
     {
-        private static uint getGCD(uint m, uint n)
-        {
-            uint result = 0;
-            while (n != 0)
-            {
-                result = m % n;
-                m = n;
-                n = result;
-            }
-            return m;
-        }
-
-        private static uint getLCM(uint m, uint n)
-        {
-            return m * (n / getGCD(m, n));
-        }
-
-        private static uint getLCM(uint[] input)
-        {
-            if (input == null || input.Length == 0) return 0;
-            if (input.Length == 1) return input[0];
-            uint result = getLCM(input[0], input[1]);
-            for (int i = 2; i < input.Length; i++)
-            {
-                result = getLCM(result, input[i]);
-            }
-            return result;
-        }
-
-        private static Fraction[] getCoefficient(bool[] input)
-        {
-            List<uint> convertedInput = new List<uint>();
-            for (uint i = 0; i < input.Length; i++)
-            {
-                if (input[i]) convertedInput.Add(i + 1);
-            }
-            return getCoefficient(convertedInput.ToArray());
-        }
-
-        private static Fraction[] getCoefficient(uint[] input)
-        {
-            if (input == null || input.Length == 0) return null;
-            Array.Sort(input);
-            uint product = input[0];
-            if (product == 0) return null;
-            for (int i = 1; i < input.Length; i++)
-            {
-                if (input[i] == 0 || input[i - 1] == input[i]) return null;
-                product *= input[i];
-            }
-            Fraction[] result = new Fraction[input.Length];
-            for (int i = 0; i < input.Length; i++)
-            {
-                result[i] = new Fraction();
-                result[i].numerator = product / input[i];
-                result[i].denominator = 1;
-                for (int j = 0; j < input.Length; j++)
-                {
-                    if (j == i) continue;
-                    result[i].denominator *= i < j ? input[j] - input[i] : input[i] - input[j];
-                }
-                uint gcd = getGCD(result[i].numerator, result[i].denominator);
-                result[i].numerator /= gcd;
-                result[i].denominator /= gcd;
-                result[i].sign = i % 2 == 0;
-                result[i].id = input[i] - 1;
-            }
-            return result;
-        }
+        private readonly uint n = 0;
+        private readonly uint m = 0;
+        private readonly uint[][] commonWeightSet;
+        private byte[][][] publicKeysPublished;//node, serial, data
 
         private static IList<byte[]> Domains => new List<byte[]>
         {
@@ -106,7 +40,7 @@ namespace BLSTest
             Enumerable.Repeat((byte)0xab, BLSHerumi.HashLength).ToArray(),
         };
 
-        private static byte[] generatePrivateKey(int bits)
+        private byte[] GeneratePrivateKey(int bits)
         {
             int bytes = bits / 8;
             int ints = bytes / sizeof(int);
@@ -131,7 +65,7 @@ namespace BLSTest
             return privateKey;
         }
 
-        private static byte[] aggregatePrivateKey(byte[][] privateKeys, uint[] weight)
+        private byte[] AggregatePrivateKey(byte[][] privateKeys, uint[] weight)
         {
             if (privateKeys == null || privateKeys.Length == 0) return null;
             if (weight == null || weight.Length == 0) return null;
@@ -157,77 +91,18 @@ namespace BLSTest
             return result;
         }
 
-        private static int getZeroBits(uint n, uint m)
-        {
-            return (int)(Math.Log2(n * ((long)Math.Pow(n, m) - 1) / (n - 1) + 1) + 3);
-        }
-
-        private static List<Fraction[]> getAllFractions(uint n, uint m)
-        {
-            List<Fraction[]> fractions = new List<Fraction[]>();
-            if (m == 0 || n == 0 || m > n)
-            {
-                return fractions;
-            }
-            bool[] comp = new bool[n];
-            int q = 0;
-            for (; q < m; q++)
-            {
-                comp[q] = true;
-            }
-            fractions.Add(getCoefficient(comp));
-
-            while (true)
-            {
-                for (q = 0; q < n - 1; q++)
-                {
-                    if (comp[q] == true && comp[q + 1] == false) break;
-                }
-                if (q == n - 1) break;
-                comp[q] = false;
-                comp[q + 1] = true;
-
-                int p = 0;
-                while (p < q)
-                {
-                    while (p < n - 1 && comp[p] == true) p++;
-                    while (q > 0 && comp[q] == false) q--;
-                    if (p < q)
-                    {
-                        comp[p] = true;
-                        comp[q] = false;
-                    }
-                }
-                fractions.Add(getCoefficient(comp));
-            }
-
-            return fractions;
-        }
-
-        private static void aggregateSignature(uint n, uint m)
+        public BLSTest(uint n, uint m)
         {
             //Filter
             if (m == 0 || n == 0 || m > n)
             {
                 throw new ArithmeticException("Input not valid!");
             }
-            Console.WriteLine("Input checked...");
+            this.n = n;
+            this.m = m;
 
-            //Initiate
-            var sharedMessageHash = MessageHashes[1];
-            var domain = Domains[1];
-            int bits = getZeroBits(n, m);
-            byte[][][] privateKeys = new byte[n][][];//node, serial, data
-            for (int i = 0; i < n; i++)
-            {
-                privateKeys[i] = new byte[m][];
-                for (int j = 0; j < m; j++)
-                {
-                    privateKeys[i][j] = generatePrivateKey(bits);
-                }
-            }
-            uint[][] commonWeightSet = new uint[n][];
-            for (int i = 0; i < n; i++)
+            commonWeightSet = new uint[n][];
+            for (int i = 0; i < this.n; i++)
             {
                 commonWeightSet[i] = new uint[m];
                 commonWeightSet[i][0] = 1;
@@ -236,26 +111,60 @@ namespace BLSTest
                     commonWeightSet[i][j] = (uint)(commonWeightSet[i][j - 1] * (i + 1));
                 }
             }
-            Console.WriteLine("Data initialized...");
+        }
 
+        public byte[][][] GetPrivateKeys()
+        {
+            byte[][][] privateKeys = new byte[n][][];//node, serial, data
+
+            int bits = Utility.GetZeroBits(n, m);
+
+            for (int i = 0; i < this.n; i++)
+            {
+                privateKeys[i] = new byte[m][];
+                for (int j = 0; j < m; j++)
+                {
+                    privateKeys[i][j] = GeneratePrivateKey(bits);
+                }
+            }
+
+            return privateKeys;
+        }
+
+        public byte[][][] GetPubicKeysPublished(byte[][][] privateKeys)
+        {
             //Calculate published public keys
-            byte[][][] publicKeysPublished = new byte[n][][];//node, serial, data
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Calculate published public keys");
+            Console.WriteLine("-----------------------------\n");
+            publicKeysPublished = new byte[n][][];//node, serial, data
             for (int i = 0; i < n; i++)
             {
+                Console.WriteLine("\nCalculate published public keys for node " + i + " :");
                 publicKeysPublished[i] = new byte[m][];
+
                 for (int j = 0; j < m; j++)
                 {
                     using var blsPublic = new BLSHerumi(new BLSParameters() { PrivateKey = privateKeys[i][j] });
                     publicKeysPublished[i][j] = new byte[BLSHerumi.PublicKeyLength];
                     _ = blsPublic.TryExportBLSPublicKey(publicKeysPublished[i][j], out var _);
+                    Console.WriteLine("[" + j + "]: 0x" + BitConverter.ToString(publicKeysPublished[i][j]).Replace("-", ""));
                 }
             }
-            Console.WriteLine("Published public keys calculated...");
+            return publicKeysPublished;
+            //Console.WriteLine("Published public keys calculated...");
+        }
 
+        public byte[][][] GetSharedPrivateKeys(byte[][][] privateKeys)
+        {
             //Calculate shared private keys
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Calculate shared private keys");
+            Console.WriteLine("-----------------------------\n");
             byte[][][] sharedPrivateKeys = new byte[n][][];//to, from, data
             for (int i = 0; i < n; i++)
             {
+                Console.WriteLine("\nCalculate shared private keys for node " + i + " :");
                 sharedPrivateKeys[i] = new byte[n][];
                 for (int j = 0; j < n; j++)
                 {
@@ -264,15 +173,24 @@ namespace BLSTest
                     {
                         privateKeySet[k] = privateKeys[j][k];
                     }
-                    sharedPrivateKeys[i][j] = aggregatePrivateKey(privateKeySet, commonWeightSet[i]);
+                    sharedPrivateKeys[i][j] = AggregatePrivateKey(privateKeySet, commonWeightSet[i]);
+                    Console.WriteLine("[" + j + "]: 0x" + BitConverter.ToString(sharedPrivateKeys[i][j]).Replace("-", ""));
                 }
             }
-            Console.WriteLine("Shared private keys calculated...");
+            return sharedPrivateKeys;
+            //Console.WriteLine("Shared private keys calculated...");
+        }
 
+        public byte[][][] GetAggregatedPublicKeys(byte[][][] publicKeysPublished)
+        {
             //Calculate public keys of shared private keys, from published public keys
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Calculate public keys of shared private keys");
+            Console.WriteLine("-----------------------------\n");
             byte[][][] publicKeysAggregated = new byte[n][][];//to, from, data
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < this.n; i++)
             {
+                Console.WriteLine("\nCalculate public keys of shared private keys for node " + i + " :");
                 publicKeysAggregated[i] = new byte[n][];
                 for (int j = 0; j < n; j++)
                 {
@@ -284,33 +202,48 @@ namespace BLSTest
                     using var blsAggregateKeys = new BLSHerumi(new BLSParameters());
                     publicKeysAggregated[i][j] = new byte[BLSHerumi.PublicKeyLength];
                     blsAggregateKeys.TryAggregatePublicKeys(contractedPublicKeys, commonWeightSet[i], publicKeysAggregated[i][j], out var _);
+                    Console.WriteLine("[" + j + "]: 0x" + BitConverter.ToString(publicKeysAggregated[i][j]).Replace("-", ""));
                 }
             }
-            Console.WriteLine("Aggregated public keys according to shared private keys...");
+            return publicKeysAggregated;
+            //Console.WriteLine("Aggregated public keys according to shared private keys...");
+        }
 
+        public void Sign(byte[][][] sharedPrivateKeys, byte[][][] publicKeysAggregated)
+        {
             //Sign & verify sharedPrivateKeys
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Sign & verify sharedPrivateKeys");
+            Console.WriteLine("-----------------------------\n");
+
             for (int i = 0; i < n; i++)
             {
                 for (int j = 0; j < n; j++)
                 {
                     using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = sharedPrivateKeys[i][j] });
                     var signature = new byte[BLSHerumi.SignatureLength];
-                    _ = blsSign.TrySignHash(sharedMessageHash, signature.AsSpan(), out var _, domain);
+                    _ = blsSign.TrySignHash(MessageHashes[1], signature.AsSpan(), out var _, Domains[3]);
 
                     var aggregatePublicKeyParameters = new BLSParameters()
                     {
                         PublicKey = publicKeysAggregated[i][j]
                     };
                     using var blsVerify = new BLSHerumi(aggregatePublicKeyParameters);
-                    if (!blsVerify.VerifyHash(sharedMessageHash, signature, domain))
+                    if (!blsVerify.VerifyHash(MessageHashes[1], signature, Domains[3]))
                     {
                         throw new Exception("SharedPrivateKeys verification failed!");
                     }
                 }
             }
             Console.WriteLine("Shared private keys verified...");
+        }
 
+        public byte[][] GetAggregatePrivateKeys(byte[][][] sharedPrivateKeys)
+        {
             //Calculate aggregated privateKeys which are used to construct signatures
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Calculate aggregated privateKeys");
+            Console.WriteLine("-----------------------------\n");
             byte[][] aggregatePrivateKeys = new byte[n][];
             for (int i = 0; i < n; i++)
             {
@@ -321,11 +254,19 @@ namespace BLSTest
                     privateKeySet[k] = sharedPrivateKeys[i][k];
                     weightSet[k] = 1u;
                 }
-                aggregatePrivateKeys[i] = aggregatePrivateKey(privateKeySet, weightSet);
+                aggregatePrivateKeys[i] = AggregatePrivateKey(privateKeySet, weightSet);
+                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(aggregatePrivateKeys[i]).Replace("-", ""));
             }
-            Console.WriteLine("Private keys used for signature aggregated...");
+            return aggregatePrivateKeys;
+            //Console.WriteLine("Private keys used for signature aggregated...");
+        }
 
+        public byte[][] GetAggregatedPublicKeysForSignature(byte[][][] publicKeysAggregated)
+        {
             //Aggregate public keys which are used to verify signatures
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Aggregate public keys");
+            Console.WriteLine("-----------------------------\n");
             byte[][] publicKeysAggregatedForSignature = new byte[n][];
             for (int i = 0; i < n; i++)
             {
@@ -339,31 +280,47 @@ namespace BLSTest
                 using var blsAggregateKeys = new BLSHerumi(new BLSParameters());
                 publicKeysAggregatedForSignature[i] = new byte[BLSHerumi.PublicKeyLength];
                 blsAggregateKeys.TryAggregatePublicKeys(contractedPublicKeys, weightSet, publicKeysAggregatedForSignature[i], out var _);
+                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(publicKeysAggregatedForSignature[i]).Replace("-", ""));
             }
-            Console.WriteLine("Public keys used to verify signatures aggregated...");
+            return publicKeysAggregatedForSignature;
+            //Console.WriteLine("Public keys used to verify signatures aggregated...");
+        }
 
+        public byte[][] GetSignatures(byte[][] aggregatePrivateKeys, byte[][] publicKeysAggregatedForSignature)
+        {
             //Sign & verify signatures
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Sign & verify signatures");
+            Console.WriteLine("-----------------------------\n");
             byte[][] signatures = new byte[n][];
             for (int i = 0; i < n; i++)
             {
                 using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = aggregatePrivateKeys[i] });
                 signatures[i] = new byte[BLSHerumi.SignatureLength];
-                _ = blsSign.TrySignHash(sharedMessageHash, signatures[i].AsSpan(), out var _, domain);
-
+                _ = blsSign.TrySignHash(MessageHashes[1], signatures[i].AsSpan(), out var _, Domains[3]);
+                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(signatures[i]).Replace("-", ""));
                 var aggregatePublicKeyParameters = new BLSParameters()
                 {
                     PublicKey = publicKeysAggregatedForSignature[i]
                 };
                 using var blsVerify = new BLSHerumi(aggregatePublicKeyParameters);
-                if (!blsVerify.VerifyHash(sharedMessageHash, signatures[i], domain))
+                if (!blsVerify.VerifyHash(MessageHashes[1], signatures[i], Domains[3]))
                 {
                     throw new Exception("AggregatePrivateKeys verification failed!");
                 }
             }
-            Console.WriteLine("Signature created and verified...");
+            return signatures;
+        }
+
+        public byte[][] GetFinalSignatures(byte[][] signatures)
+        {
+            //Calculate final signature
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Calculate final signature");
+            Console.WriteLine("-----------------------------\n");
 
             //Get coefficients for all possible combinations of consensus nodes
-            List<Fraction[]> fractions = getAllFractions(n, m);
+            List<Fraction[]> fractions = Utility.GetAllFractions(n, m);
             Console.WriteLine("Coefficients for all possible consensus node combinations calculated: " + fractions.Count);
 
             //Get LCM
@@ -376,15 +333,12 @@ namespace BLSTest
                 {
                     denominators[j] = fractions[i][j].denominator;
                 }
-                LCMs[i] = getLCM(denominators);
+                LCMs[i] = Utility.GetLCM(denominators);
             }
-            uint overallLCM = getLCM(LCMs);
-            Console.WriteLine("LCM calculated, result = " + overallLCM);
 
-            //Calculate final signature
+            uint overallLCM = Utility.GetLCM(LCMs);
+
             byte[][] finalSignatures = new byte[count][];
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
             for (int i = 0; i < count; i++)
             {
                 var rawSignatures = new Span<byte>(new byte[BLSHerumi.SignatureLength * fractions[i].Length]);
@@ -398,14 +352,15 @@ namespace BLSTest
                 finalSignatures[i] = new byte[BLSHerumi.SignatureLength];
                 using var blsAggregate = new BLSHerumi(new BLSParameters());
                 blsAggregate.TryAggregateSignatures(rawSignatures, weights, finalSignatures[i], out var _);
-                if ((i + 1) % 10 == 0)
-                {
-                    Console.WriteLine("Have calculated to " + (i + 1) + " signatures with another " + watch.Elapsed.TotalSeconds + " s...");
-                    watch.Restart();
-                }
-            }
-            Console.WriteLine("All final signature calculated...");
 
+                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(finalSignatures[i]).Replace("-", ""));
+            }
+            VerifyFinalSignature(count, overallLCM, finalSignatures);
+            return finalSignatures;
+        }
+
+        public void VerifyFinalSignature(int count, uint lcm, byte[][] finalSignatures)
+        {
             //Check final signature
             for (int i = 1; i < count; i++)
             {
@@ -420,10 +375,11 @@ namespace BLSTest
 
             var rawPublicKeys = new Span<byte>(new byte[BLSHerumi.PublicKeyLength * n]);
             uint[] weightSetCheckingSignature = new uint[n];
+
             for (int k = 0; k < n; k++)
             {
                 publicKeysPublished[k][0].CopyTo(rawPublicKeys.Slice(k * BLSHerumi.PublicKeyLength));
-                weightSetCheckingSignature[k] = overallLCM;
+                weightSetCheckingSignature[k] = lcm;
             }
             using var publicKeyGenerator = new BLSHerumi(new BLSParameters());
             var publicKeyCheckingSignature = new byte[BLSHerumi.PublicKeyLength];
@@ -432,7 +388,7 @@ namespace BLSTest
             {
                 PublicKey = publicKeyCheckingSignature
             });
-            if (!signatureChecker.VerifyHash(sharedMessageHash, finalSignatures[0], domain))
+            if (!signatureChecker.VerifyHash(MessageHashes[1], finalSignatures[0], Domains[3]))
             {
                 throw new Exception("Final Signature verification failed!");
             }
@@ -441,7 +397,19 @@ namespace BLSTest
 
         public static void Main()
         {
-            aggregateSignature(7, 5);
+            var blstest = new BLSTest(7, 3); // number of dishonest node is no more than f, therefore we only need signatures from f+1 CNs
+            var privateKeys = blstest.GetPrivateKeys();
+            var sharedPrivateKeys = blstest.GetSharedPrivateKeys(privateKeys);
+            var aggregatePrivateKeys = blstest.GetAggregatePrivateKeys(sharedPrivateKeys);
+
+            var publicKeysPublished = blstest.GetPubicKeysPublished(privateKeys);
+            var aggregatedPublicKeys = blstest.GetAggregatedPublicKeys(publicKeysPublished);
+
+            var aggregatedPublicKeysForSignature = blstest.GetAggregatedPublicKeysForSignature(aggregatedPublicKeys);
+
+            var signatures = blstest.GetSignatures(aggregatePrivateKeys, aggregatedPublicKeysForSignature);
+
+            var finalSignatures = blstest.GetFinalSignatures(signatures);
         }
     }
 }
