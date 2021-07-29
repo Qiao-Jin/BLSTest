@@ -181,7 +181,7 @@ namespace BLSTest
             //Console.WriteLine("Shared private keys calculated...");
         }
 
-        public byte[][][] GetPublicKeysAggregated(byte[][][] publicKeysPublished)
+        public byte[][][] GetAggregatedPublicKeys(byte[][][] publicKeysPublished)
         {
             //Calculate public keys of shared private keys, from published public keys
             Console.WriteLine("\n\n-----------------------------");
@@ -238,8 +238,7 @@ namespace BLSTest
             Console.WriteLine("Shared private keys verified...");
         }
 
-
-        public byte[][] GetaggregatePrivateKeys(byte[][][] sharedPrivateKeys)
+        public byte[][] GetAggregatePrivateKeys(byte[][][] sharedPrivateKeys)
         {
             //Calculate aggregated privateKeys which are used to construct signatures
             Console.WriteLine("\n\n-----------------------------");
@@ -262,7 +261,7 @@ namespace BLSTest
             //Console.WriteLine("Private keys used for signature aggregated...");
         }
 
-        public byte[][] GetPublicKeysAggregatedForSignature(byte[][][] publicKeysAggregated)
+        public byte[][] GetAggregatedPublicKeysForSignature(byte[][][] publicKeysAggregated)
         {
             //Aggregate public keys which are used to verify signatures
             Console.WriteLine("\n\n-----------------------------");
@@ -402,14 +401,14 @@ namespace BLSTest
             var blstest = new BLSTest(7, 5);
             var privateKeys = blstest.GetPrivateKeys();
             var sharedPrivateKeys = blstest.GetSharedPrivateKeys(privateKeys);
-            var aggregatePrivateKeys = blstest.GetaggregatePrivateKeys(sharedPrivateKeys);
+            var aggregatePrivateKeys = blstest.GetAggregatePrivateKeys(sharedPrivateKeys);
 
             var publicKeysPublished = blstest.GetPubicKeysPublished(privateKeys);
-            var publicKeysAggregated = blstest.GetPublicKeysAggregated(publicKeysPublished);
+            var aggregatedPublicKeys = blstest.GetAggregatedPublicKeys(publicKeysPublished);
 
-            var publicKeysAggregatedForSignature = blstest.GetPublicKeysAggregatedForSignature(publicKeysAggregated);
+            var aggregatedPublicKeysForSignature = blstest.GetAggregatedPublicKeysForSignature(aggregatedPublicKeys);
 
-            var signatures = blstest.GetSignatures(aggregatePrivateKeys, publicKeysAggregatedForSignature);
+            var signatures = blstest.GetSignatures(aggregatePrivateKeys, aggregatedPublicKeysForSignature);
 
             var finalSignatures = blstest.GetFinalSignatures(signatures);
         }
