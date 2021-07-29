@@ -397,7 +397,7 @@ namespace BLSTest
 
         public static void Main()
         {
-            var blstest = new BLSTest(7, 3); // dishonest node is no more than f, therefore we only need signatures from f+1 CNs
+            var blstest = new BLSTest(7, 3); // number of dishonest node is no more than f, therefore we only need signatures from f+1 CNs
             var privateKeys = blstest.GetPrivateKeys();
             var sharedPrivateKeys = blstest.GetSharedPrivateKeys(privateKeys);
             var aggregatePrivateKeys = blstest.GetAggregatePrivateKeys(sharedPrivateKeys);
