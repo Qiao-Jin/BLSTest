@@ -114,19 +114,21 @@ namespace BLSTest
             foreach (var node in nodes)
             {
                 var pub_key = node.GetAggregatedPublicKeyForSignature();
-                Console.WriteLine("[" + node.Index + "]: PubKey 0x" + BitConverter.ToString(pub_key).Replace("-", ""));
+                Console.WriteLine("PubKey [" + node.Index + "]: 0x" + BitConverter.ToString(pub_key).Replace("-", ""));
             }
         }
 
         public byte[][] GetSignatures()
         {
             List<byte[]> sigs = new List<byte[]>();
+            Console.WriteLine("\n\nSignatures:");
             foreach (var node in nodes)
             {
                 var sig = node.GetSignature(MessageHashes[0]);
-                Console.WriteLine("[" + node.Index + "]: Sig 0x" + BitConverter.ToString(sig).Replace("-", ""));
+                Console.WriteLine("Sig [" + node.Index + "]: 0x" + BitConverter.ToString(sig).Replace("-", ""));
                 sigs.Add(sig);
             }
+            Console.WriteLine("\n");
             return sigs.ToArray();
         }
 
