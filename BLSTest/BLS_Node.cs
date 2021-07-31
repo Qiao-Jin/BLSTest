@@ -86,10 +86,11 @@ namespace BLSTest
 
         public byte[][] GenerateSharedPrivateKeys(uint[][] commonWeightSet)
         {
+            Console.WriteLine("\n\nCalculate shared private keys for node " + index + " :");
             //Calculate shared private keys
             for (int i = 0; i < n; i++)
             {
-                Console.WriteLine("\nCalculate shared private keys for node " + i + " :");
+                
                 sharedPrivateKeys.Add(AggregatePrivateKey(this.blsSecretKeys.ToArray(), commonWeightSet[i]));
                 Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(sharedPrivateKeys[i]).Replace("-", ""));
             }
@@ -132,13 +133,12 @@ namespace BLSTest
                 weightSet[k] = 1u;
             }
             aggrattedPrivateKey = AggregatePrivateKey(collectedSharedPrivateKeys.ToArray(), weightSet);
-            Console.WriteLine("[" + this.index + "]: 0x" + BitConverter.ToString(aggrattedPrivateKey).Replace("-", ""));
             return aggrattedPrivateKey;
         }
 
         private byte[][] GetPublishedPubicKeys()
         {
-            Console.WriteLine("\nCalculate published public keys for node " + this.index + " :");
+            //Console.WriteLine("\nCalculate published public keys for node " + this.index + " :");
 
             for (int i = 0; i < m; i++)
             {
@@ -147,14 +147,14 @@ namespace BLSTest
 
                 _ = blsPublic.TryExportBLSPublicKey(pub_key, out var _);
                 blsPublicKeys.Add(pub_key);
-                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(blsPublicKeys[i]).Replace("-", ""));
+                //Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(blsPublicKeys[i]).Replace("-", ""));
             }
             return blsPublicKeys.ToArray();
         }
 
         public byte[][] GetSharedPublicKeys(uint[][] commonWeightSet)
         {
-            Console.WriteLine("\nCalculate public keys of shared private keys for node " + this.index + " :");
+            Console.WriteLine("Calculate shared public keys for node " + this.index + " :");
             GetPublishedPubicKeys();
             for (int i = 0; i < n; i++)
             {
@@ -183,18 +183,16 @@ namespace BLSTest
             using var blsAggregateKeys = new BLSHerumi(new BLSParameters());
             aggrattedPublicKey = new byte[BLSHerumi.PublicKeyLength];
             blsAggregateKeys.TryAggregatePublicKeys(contractedPublicKeys, weightSet, aggrattedPublicKey, out var _);
-            Console.WriteLine("[" + this.index + "]: 0x" + BitConverter.ToString(aggrattedPublicKey).Replace("-", ""));
             return aggrattedPublicKey;
         }
 
         public byte[] GetSignature(byte[] msg)
         {
+
             using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = GetAggregatePrivateKey() });
             var signature = new byte[BLSHerumi.SignatureLength];
 
             _ = blsSign.TrySignHash(msg, signature.AsSpan(), out var _, this.domain);
-
-            Console.WriteLine("[" + this.index + "]: 0x" + BitConverter.ToString(signature).Replace("-", ""));
 
             var aggregatePublicKeyParameters = new BLSParameters()
             {
