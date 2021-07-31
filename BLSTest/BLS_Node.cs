@@ -1,4 +1,4 @@
-﻿using Cortex.Cryptography;
+using Cortex.Cryptography;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,15 +11,19 @@ namespace BLSTest
         private readonly uint m = 0;
         private readonly int index = -1;
         private readonly byte[] domain;
-        public List<byte[]> sharedPrivateKeys;
-        public List<byte[]> sharedPublicKeys;
-        public List<byte[]> collectedSharedPrivateKeys;
-        public List<byte[]> collectedSharedPublicKeys;
-        private List<byte[]> blsSecretKeys;
-        private List<byte[]> blsPublicKeys;
+        public List<byte[]> sharedPrivateKeys = new List<byte[]>();
+        public List<byte[]> sharedPublicKeys = new List<byte[]>();
+        public byte[][] collectedSharedPrivateKeys;
+        public byte[][] collectedSharedPublicKeys;
+        private List<byte[]> blsSecretKeys = new List<byte[]>();
+        private List<byte[]> blsPublicKeys = new List<byte[]>();
         private byte[] aggrattedPrivateKey;
         private byte[] aggrattedPublicKey;
 
+        public int Index
+        {
+            get { return index; }
+        }
         public BLS_Node(int index, byte[] domain, uint n, uint m)
         {
             this.index = index;
@@ -32,6 +36,8 @@ namespace BLSTest
             {
                 blsSecretKeys.Add(key);
             }
+            collectedSharedPrivateKeys = new byte[n][];
+            collectedSharedPublicKeys = new byte[n][];
         }
 
         private byte[] GeneratePrivateKeyFromRandom(int bits)
@@ -73,9 +79,21 @@ namespace BLSTest
 
         public void CollectSharedKeyPair(int index, byte[] sharedPrivateKey, byte[] sharedPublicKey)
         {
-            if (this.collectedSharedPrivateKeys[index] != null) return;
+            //if (this.collectedSharedPrivateKeys. != null) return;
             this.collectedSharedPrivateKeys[index] = sharedPrivateKey;
             this.collectedSharedPublicKeys[index] = sharedPublicKey;
+        }
+
+        public byte[][] GenerateSharedPrivateKeys(uint[][] commonWeightSet)
+        {
+            //Calculate shared private keys
+            for (int i = 0; i < n; i++)
+            {
+                Console.WriteLine("\nCalculate shared private keys for node " + i + " :");
+                sharedPrivateKeys.Add(AggregatePrivateKey(this.blsSecretKeys.ToArray(), commonWeightSet[i]));
+                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(sharedPrivateKeys[i]).Replace("-", ""));
+            }
+            return sharedPrivateKeys.ToArray();
         }
 
         private byte[] AggregatePrivateKey(byte[][] privateKeys, uint[] weight)
@@ -105,19 +123,7 @@ namespace BLSTest
             return result;
         }
 
-        public byte[][] GenerateSharedPrivateKeys(uint[][] commonWeightSet)
-        {
-            //Calculate shared private keys
-            for (int i = 0; i < n; i++)
-            {
-                Console.WriteLine("\nCalculate shared private keys for node " + i + " :");
-                sharedPrivateKeys[i] = AggregatePrivateKey(this.blsSecretKeys.ToArray(), commonWeightSet[i]);
-                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(sharedPrivateKeys[i]).Replace("-", ""));
-            }
-            return sharedPrivateKeys.ToArray();
-        }
-
-        public byte[] GetAggregatePrivateKey()
+        private byte[] GetAggregatePrivateKey()
         {
             //Calculate aggregated privateKeys which are used to construct signatures
             uint[] weightSet = new uint[n];
@@ -130,23 +136,26 @@ namespace BLSTest
             return aggrattedPrivateKey;
         }
 
-        public byte[][] GetPublishedPubicKeys()
+        private byte[][] GetPublishedPubicKeys()
         {
             Console.WriteLine("\nCalculate published public keys for node " + this.index + " :");
 
             for (int i = 0; i < m; i++)
             {
                 using var blsPublic = new BLSHerumi(new BLSParameters() { PrivateKey = blsSecretKeys[i] });
-                blsPublicKeys[i] = new byte[BLSHerumi.PublicKeyLength];
-                _ = blsPublic.TryExportBLSPublicKey(blsPublicKeys[i], out var _);
+                var pub_key = new byte[BLSHerumi.PublicKeyLength];
+
+                _ = blsPublic.TryExportBLSPublicKey(pub_key, out var _);
+                blsPublicKeys.Add(pub_key);
                 Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(blsPublicKeys[i]).Replace("-", ""));
             }
             return blsPublicKeys.ToArray();
         }
 
-        public byte[][] GetAggregatedPublicKeys(uint[][] commonWeightSet)
+        public byte[][] GetSharedPublicKeys(uint[][] commonWeightSet)
         {
             Console.WriteLine("\nCalculate public keys of shared private keys for node " + this.index + " :");
+            GetPublishedPubicKeys();
             for (int i = 0; i < n; i++)
             {
                 var contractedPublicKeys = new Span<byte>(new byte[BLSHerumi.PublicKeyLength * m]);
@@ -155,7 +164,7 @@ namespace BLSTest
                     blsPublicKeys.ToArray()[k].CopyTo(contractedPublicKeys.Slice(k * BLSHerumi.PublicKeyLength));
                 }
                 using var blsAggregateKeys = new BLSHerumi(new BLSParameters());
-                sharedPublicKeys[i] = new byte[BLSHerumi.PublicKeyLength];
+                sharedPublicKeys.Add(new byte[BLSHerumi.PublicKeyLength]);
                 blsAggregateKeys.TryAggregatePublicKeys(contractedPublicKeys, commonWeightSet[i], sharedPublicKeys[i], out var _);
                 Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(sharedPublicKeys[i]).Replace("-", ""));
             }
@@ -180,13 +189,16 @@ namespace BLSTest
 
         public byte[] GetSignature(byte[] msg)
         {
-            using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = this.aggrattedPrivateKey });
+            using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = GetAggregatePrivateKey() });
             var signature = new byte[BLSHerumi.SignatureLength];
+
             _ = blsSign.TrySignHash(msg, signature.AsSpan(), out var _, this.domain);
+
             Console.WriteLine("[" + this.index + "]: 0x" + BitConverter.ToString(signature).Replace("-", ""));
+
             var aggregatePublicKeyParameters = new BLSParameters()
             {
-                PublicKey = aggrattedPublicKey
+                PublicKey = GetAggregatedPublicKeyForSignature()
             };
             using var blsVerify = new BLSHerumi(aggregatePublicKeyParameters);
             if (!blsVerify.VerifyHash(msg, signature, domain))
