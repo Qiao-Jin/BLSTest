@@ -22,7 +22,6 @@ namespace BLSTest
         private readonly uint m = 0;
         private readonly uint[][] commonWeightSet;
         private readonly List<BLS_Node> nodes = new List<BLS_Node>();
-        private byte[][][] publicKeysPublished;//node, serial, data
 
         private static IList<byte[]> Domains => new List<byte[]>
         {
@@ -65,37 +64,37 @@ namespace BLSTest
             }
         }
 
-        public void Sign(byte[][][] sharedPrivateKeys, byte[][][] publicKeysAggregated)
-        {
-            //Sign & verify sharedPrivateKeys
-            Console.WriteLine("\n\n-----------------------------");
-            Console.WriteLine("Sign & verify sharedPrivateKeys");
-            Console.WriteLine("-----------------------------\n");
+        //public void Sign(byte[][][] sharedPrivateKeys, byte[][][] publicKeysAggregated)
+        //{
+        //    //Sign & verify sharedPrivateKeys
+        //    Console.WriteLine("\n\n-----------------------------");
+        //    Console.WriteLine("Sign & verify sharedPrivateKeys");
+        //    Console.WriteLine("-----------------------------\n");
 
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = sharedPrivateKeys[i][j] });
-                    var signature = new byte[BLSHerumi.SignatureLength];
-                    _ = blsSign.TrySignHash(MessageHashes[2], signature.AsSpan(), out var _, Domains[3]);
+        //    for (int i = 0; i < n; i++)
+        //    {
+        //        for (int j = 0; j < n; j++)
+        //        {
+        //            using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = sharedPrivateKeys[i][j] });
+        //            var signature = new byte[BLSHerumi.SignatureLength];
+        //            _ = blsSign.TrySignHash(MessageHashes[2], signature.AsSpan(), out var _, Domains[3]);
 
-                    var aggregatePublicKeyParameters = new BLSParameters()
-                    {
-                        PublicKey = publicKeysAggregated[i][j]
-                    };
-                    using var blsVerify = new BLSHerumi(aggregatePublicKeyParameters);
-                    if (!blsVerify.VerifyHash(MessageHashes[2], signature, Domains[3]))
-                    {
-                        throw new Exception("SharedPrivateKeys verification failed!");
-                    }
-                }
-            }
-            Console.WriteLine("Shared private keys verified...");
-        }
+        //            var aggregatePublicKeyParameters = new BLSParameters()
+        //            {
+        //                PublicKey = publicKeysAggregated[i][j]
+        //            };
+        //            using var blsVerify = new BLSHerumi(aggregatePublicKeyParameters);
+        //            if (!blsVerify.VerifyHash(MessageHashes[2], signature, Domains[3]))
+        //            {
+        //                throw new Exception("SharedPrivateKeys verification failed!");
+        //            }
+        //        }
+        //    }
+        //    Console.WriteLine("Shared private keys verified...");
+        //}
 
 
-        public void KeyDistribute()
+        public void KeyDistribution()
         {
             foreach (var node in nodes)
             {
@@ -119,6 +118,25 @@ namespace BLSTest
             }
         }
 
+        /// <summary>
+        /// Simulate the process of aggreatated public keys for signature distribution in a p2p network
+        /// </summary>
+        public void PublicKeysforSignatureDistribution()
+        {
+            foreach (var node in nodes)
+            {
+                var pub_key = node.GetAggregatedPublicKeyForSignature();
+                for (int i = 0; i < n; i++)
+                {
+                    nodes[i].CollectPublicKeysForSignature(node.Index, pub_key);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Simulate the signature synchronization
+        /// </summary>
+        /// <returns>BLS signatures from each node</returns>
         public byte[][] GetSignatures()
         {
             List<byte[]> sigs = new List<byte[]>();
@@ -132,13 +150,14 @@ namespace BLSTest
             Console.WriteLine("\n");
             return sigs.ToArray();
         }
+
+        /// <summary>
+        /// Calculate the final signature
+        /// </summary>
+        /// <param name="signatures"> BLS signatures from each node</param>
+        /// <returns></returns>
         public byte[][] GetFinalSignatures(byte[][] signatures)
         {
-            //Calculate final signature
-            Console.WriteLine("\n\n-----------------------------");
-            Console.WriteLine("Calculate final signature");
-            Console.WriteLine("-----------------------------\n");
-
             //Get coefficients for all possible combinations of consensus nodes
             List<Fraction[]> fractions = Utility.GetAllFractions(n, m);
             Console.WriteLine("Coefficients for all possible consensus node combinations calculated: " + fractions.Count);
@@ -219,9 +238,18 @@ namespace BLSTest
         {
             var blstest = new BLSTest(7, 3); // number of dishonest node is no more than f, therefore we only need signatures from f+1 CNs
 
-            blstest.KeyDistribute();
+            blstest.KeyDistribution();
             blstest.AggregateKeyPair();
+
+            blstest.PublicKeysforSignatureDistribution();
+
             var sigs = blstest.GetSignatures();
+
+            //Calculate final signature
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Calculate final signature");
+            Console.WriteLine("-----------------------------\n");
+
             blstest.GetFinalSignatures(sigs);
         }
     }

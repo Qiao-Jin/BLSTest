@@ -17,9 +17,9 @@ namespace BLSTest
         public byte[][] collectedSharedPublicKeys;
         private List<byte[]> blsSecretKeys = new List<byte[]>();
         private List<byte[]> blsPublicKeys = new List<byte[]>();
-        private byte[] aggrattedPrivateKey;
-        private byte[] aggrattedPublicKey;
-
+        private byte[] localAggregatedPrivateKey;
+        private byte[] localAggregatedPublicKey;
+        private byte[][] aggregatedPublicKeysForSignature;
         public int Index
         {
             get { return index; }
@@ -38,6 +38,8 @@ namespace BLSTest
             }
             collectedSharedPrivateKeys = new byte[n][];
             collectedSharedPublicKeys = new byte[n][];
+
+            aggregatedPublicKeysForSignature = new byte[n][];
         }
 
         private byte[] GeneratePrivateKeyFromRandom(int bits)
@@ -83,6 +85,11 @@ namespace BLSTest
             this.collectedSharedPrivateKeys[index] = sharedPrivateKey;
             this.collectedSharedPublicKeys[index] = sharedPublicKey;
         }
+        public void CollectPublicKeysForSignature(int index, byte[] aggretatedPublicKey)
+        {
+            if (this.aggregatedPublicKeysForSignature[index] != null) return;
+            this.aggregatedPublicKeysForSignature[index] = aggretatedPublicKey;
+        }
 
         public byte[][] GenerateSharedPrivateKeys(uint[][] commonWeightSet)
         {
@@ -90,7 +97,7 @@ namespace BLSTest
             //Calculate shared private keys
             for (int i = 0; i < n; i++)
             {
-                
+
                 sharedPrivateKeys.Add(AggregatePrivateKey(this.blsSecretKeys.ToArray(), commonWeightSet[i]));
                 Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(sharedPrivateKeys[i]).Replace("-", ""));
             }
@@ -132,8 +139,8 @@ namespace BLSTest
             {
                 weightSet[k] = 1u;
             }
-            aggrattedPrivateKey = AggregatePrivateKey(collectedSharedPrivateKeys.ToArray(), weightSet);
-            return aggrattedPrivateKey;
+            localAggregatedPrivateKey = AggregatePrivateKey(collectedSharedPrivateKeys.ToArray(), weightSet);
+            return localAggregatedPrivateKey;
         }
 
         private byte[][] GetPublishedPubicKeys()
@@ -181,9 +188,12 @@ namespace BLSTest
                 weightSet[k] = 1u;
             }
             using var blsAggregateKeys = new BLSHerumi(new BLSParameters());
-            aggrattedPublicKey = new byte[BLSHerumi.PublicKeyLength];
-            blsAggregateKeys.TryAggregatePublicKeys(contractedPublicKeys, weightSet, aggrattedPublicKey, out var _);
-            return aggrattedPublicKey;
+            localAggregatedPublicKey = new byte[BLSHerumi.PublicKeyLength];
+            blsAggregateKeys.TryAggregatePublicKeys(contractedPublicKeys, weightSet, localAggregatedPublicKey, out var _);
+
+            this.aggregatedPublicKeysForSignature[this.index] = localAggregatedPublicKey;
+
+            return localAggregatedPublicKey;
         }
 
         public byte[] GetSignature(byte[] msg)
