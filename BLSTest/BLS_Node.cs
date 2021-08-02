@@ -20,7 +20,7 @@ namespace BLSTest
         private byte[][] collectedSharedPublicKeys;
 
         // Locally aggregated private key to sign message
-        public byte[] LocalAggregatedPrivateKey => GetAggregatePrivateKey();
+        private byte[] LocalAggregatedPrivateKey => GetAggregatePrivateKey();
         public byte[] LocalAggregatedPublicKey => GetAggregatedPublicKey();
 
         private byte[][] aggregatedPublicKeysForSignature;
@@ -211,7 +211,7 @@ namespace BLSTest
 
         public byte[] GetSignature(byte[] msg)
         {
-            using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = GetAggregatePrivateKey() });
+            using var blsSign = new BLSHerumi(new BLSParameters() { PrivateKey = LocalAggregatedPrivateKey });
             var signature = new byte[BLSHerumi.SignatureLength];
 
             _ = blsSign.TrySignHash(msg, signature.AsSpan(), out var _, this.domain);
