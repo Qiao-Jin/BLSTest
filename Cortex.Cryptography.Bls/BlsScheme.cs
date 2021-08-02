@@ -7,8 +7,8 @@ namespace Cortex.Cryptography
     public enum BlsScheme
     {
         Unknown = 0,
-        Basic, 
-        MessageAugmentation, 
+        Basic,
+        MessageAugmentation,
         ProofOfPossession
     }
 }
