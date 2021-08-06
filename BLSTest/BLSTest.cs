@@ -200,6 +200,29 @@ namespace BLSTest
             Console.WriteLine("Final signature verified.");
         }
 
+
+        void Block21(){ }
+        void Block22() { }
+        void Block23() { }
+        void Block24() { }
+        void Block25() { }
+        void Block26() { }
+        void Block27() { }
+        void Block28() { }
+        void Block29() { }
+        void Block30() { }
+        void Block31() { }
+        void Block32() { }
+        void Block33() { }
+        void Block34() { }
+        void Block35() { }
+        void Block36() { }
+        void Block37() { }
+        void Block38() { }
+        void Block39() { }
+        void Block40() { }
+        void Block41() { }
+        void Block42() { }
         public static void Main()
         {
             var blstest = new BLSTest(7, 3); // number of dishonest node is no more than f, therefore we only need signatures from f+1 CNs

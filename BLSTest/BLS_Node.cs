@@ -86,6 +86,33 @@ namespace BLSTest
             return privateKeys;
         }
 
+        private byte[] AggregatePrivateKey(byte[][] privateKeys, uint[] weight)
+        {
+            if (privateKeys == null || privateKeys.Length == 0) return null;
+            if (weight == null || weight.Length == 0) return null;
+            if (privateKeys.Length != weight.Length) return null;
+
+            byte[] result = new byte[privateKeys[0].Length];
+            for (int j = 0; j < privateKeys.Length; j++)
+            {
+                for (int i = result.Length - 1; i >= 0; i--)
+                {
+                    uint roughResult = result[i] + privateKeys[j][i] * weight[j];
+                    result[i] = (byte)roughResult;
+                    uint flap = roughResult / 256;
+                    int p = i - 1;
+                    while (flap != 0)
+                    {
+                        if (p < 0) throw new ArithmeticException("Private key exceeds limit!");
+                        flap += result[p];
+                        result[p--] = (byte)flap;
+                        flap /= 256;
+                    }
+                }
+            }
+            return result;
+        }
+
         /// <summary>
         /// Generate shared private key
         /// </summary>
@@ -119,33 +146,6 @@ namespace BLSTest
         {
             if (this.aggregatedPublicKeysForSignature[index] != null) return;
             this.aggregatedPublicKeysForSignature[index] = aggretatedPublicKey;
-        }
-
-        private byte[] AggregatePrivateKey(byte[][] privateKeys, uint[] weight)
-        {
-            if (privateKeys == null || privateKeys.Length == 0) return null;
-            if (weight == null || weight.Length == 0) return null;
-            if (privateKeys.Length != weight.Length) return null;
-
-            byte[] result = new byte[privateKeys[0].Length];
-            for (int j = 0; j < privateKeys.Length; j++)
-            {
-                for (int i = result.Length - 1; i >= 0; i--)
-                {
-                    uint roughResult = result[i] + privateKeys[j][i] * weight[j];
-                    result[i] = (byte)roughResult;
-                    uint flap = roughResult / 256;
-                    int p = i - 1;
-                    while (flap != 0)
-                    {
-                        if (p < 0) throw new ArithmeticException("Private key exceeds limit!");
-                        flap += result[p];
-                        result[p--] = (byte)flap;
-                        flap /= 256;
-                    }
-                }
-            }
-            return result;
         }
 
         /// <summary>
@@ -187,6 +187,7 @@ namespace BLSTest
                 {
                     blsPublicKeys.ToArray()[k].CopyTo(contractedPublicKeys.Slice(k * BLSHerumi.PublicKeyLength));
                 }
+                //blsPublicKeys.Select((p,i) => p.CopyTo(contractedPublicKeys.Slice(i * BLSHerumi.PublicKeyLength)));
                 using var blsAggregateKeys = new BLSHerumi(new BLSParameters());
                 sharedPublicKeys[i] = new byte[BLSHerumi.PublicKeyLength];
                 blsAggregateKeys.TryAggregatePublicKeys(contractedPublicKeys, commonWeightSet[i], sharedPublicKeys[i], out var _);
@@ -245,6 +246,5 @@ namespace BLSTest
             }
             Console.WriteLine("Shared private keys verified...");
         }
-
     }
 }
