@@ -244,7 +244,7 @@ namespace BLSTest
             {
                 throw new Exception("SharedPrivateKeys verification failed!");
             }
-            Console.WriteLine("Shared private keys verified...");
+            //Console.WriteLine("Shared private keys verified...");
         }
     }
 }

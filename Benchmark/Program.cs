@@ -5,6 +5,7 @@ using BenchmarkDotNet.Running;
 using BLSTest;
 namespace Benchmarks
 {
+    [MarkdownExporter, AsciiDocExporter, HtmlExporter, CsvExporter, RPlotExporter]
     public class BLSBenchmark
     {
 
