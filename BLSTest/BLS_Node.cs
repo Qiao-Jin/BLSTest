@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace BLSTest
 {
-    class BLS_Node
+    public class BLS_Node
     {
         private readonly uint n = 0;
         private readonly uint m = 0;

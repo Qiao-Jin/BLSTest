@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30717.126
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cortex.Cryptography.Bls", "Cortex.Cryptography.Bls\Cortex.Cryptography.Bls.csproj", "{4DC5B834-3222-4EDC-881C-A00D77E1DC63}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BLSTest", "BLSTest\BLSTest.csproj", "{D7CB4A4E-CBED-48A0-AE0A-FBC010DF2A7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Benchmark\Benchmark.csproj", "{519A7127-493A-4674-BD45-8C4ECE0FB2DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{D7CB4A4E-CBED-48A0-AE0A-FBC010DF2A7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7CB4A4E-CBED-48A0-AE0A-FBC010DF2A7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7CB4A4E-CBED-48A0-AE0A-FBC010DF2A7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{519A7127-493A-4674-BD45-8C4ECE0FB2DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{519A7127-493A-4674-BD45-8C4ECE0FB2DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{519A7127-493A-4674-BD45-8C4ECE0FB2DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{519A7127-493A-4674-BD45-8C4ECE0FB2DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
