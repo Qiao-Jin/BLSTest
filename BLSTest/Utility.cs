@@ -4,7 +4,7 @@ using System.Text;
 
 namespace BLSTest
 {
-    public class Utility
+    class Utility
     {
         public static uint GetGCD(uint m, uint n)
         {

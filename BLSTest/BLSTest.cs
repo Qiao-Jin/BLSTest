@@ -16,7 +16,7 @@ namespace BLSTest
         public uint id;
     }
 
-    public class BLS_N3
+    public class BLSTest
     {
         private readonly uint n = 0;
         private readonly uint m = 0;
@@ -40,7 +40,7 @@ namespace BLSTest
             Enumerable.Repeat((byte)0xab, BLSHerumi.HashLength).ToArray(),
         };
 
-        public BLS_N3(uint n, uint m)
+        public BLSTest(uint n, uint m)
         {
             //Filter
             if (m == 0 || n == 0 || m > n)
@@ -70,15 +70,15 @@ namespace BLSTest
 
             foreach (var node in nodes)
             {
-                //Console.WriteLine("Distribute shared key pairs for node " + node.Index + " :");
+                Console.WriteLine("Distribute shared key pairs for node " + node.Index + " :");
                 var pri_keys = node.GenerateSharedPrivateKeys(commonWeightSet);
                 var pub_keys = node.GetSharedPublicKeys(commonWeightSet);
                 for (int i = 0; i < n; i++)
                 {
                     nodes[i].CollectSharedKeyPair(node.Index, pri_keys[i], pub_keys[i]);
                     nodes[i].CheckKeyPair(MessageHashes[1], pri_keys[i], pub_keys[i]);
-                    //Console.WriteLine("- pri [" + i + "]: 0x" + BitConverter.ToString(pri_keys[i]).Replace("-", ""));
-                    //Console.WriteLine("* pub [" + i + "]: 0x" + BitConverter.ToString(pub_keys[i]).Replace("-", ""));
+                    Console.WriteLine("- pri [" + i + "]: 0x" + BitConverter.ToString(pri_keys[i]).Replace("-", ""));
+                    Console.WriteLine("* pub [" + i + "]: 0x" + BitConverter.ToString(pub_keys[i]).Replace("-", ""));
                 }
             }
             return;
@@ -106,17 +106,14 @@ namespace BLSTest
         public byte[][] GetSignatures()
         {
             List<byte[]> sigs = new List<byte[]>();
-            //Console.WriteLine("\n\nSignatures of Each Node:");
+            Console.WriteLine("\n\nSignatures of Each Node:");
             foreach (var node in nodes)
             {
-                var timestamp = DateTime.Now.ToFileTime();
                 var sig = node.GetSignature(MessageHashes[0]);
-                 timestamp = DateTime.Now.ToFileTime()- timestamp;
-                //Console.WriteLine("[" + node.Index + "]: 0x" + BitConverter.ToString(sig).Replace("-", "") + " Takes: "+timestamp);
-
+                Console.WriteLine("[" + node.Index + "]: 0x" + BitConverter.ToString(sig).Replace("-", ""));
                 sigs.Add(sig);
             }
-            //Console.WriteLine("\n");
+            Console.WriteLine("\n");
             return sigs.ToArray();
         }
 
@@ -125,11 +122,11 @@ namespace BLSTest
         /// </summary>
         /// <param name="signatures"> BLS signatures from each node</param>
         /// <returns></returns>
-        public void GetFinalSignatures(byte[][] signatures)
+        public byte[][] GetFinalSignatures(byte[][] signatures)
         {
             //Get coefficients for all possible combinations of consensus nodes
             List<Fraction[]> fractions = Utility.GetAllFractions(n, m);
-            //Console.WriteLine("Coefficients for all possible consensus node combinations calculated: " + fractions.Count);
+            Console.WriteLine("Coefficients for all possible consensus node combinations calculated: " + fractions.Count);
 
             //Get LCM
             int count = fractions.Count;
@@ -147,12 +144,8 @@ namespace BLSTest
             uint overallLCM = Utility.GetLCM(LCMs);
 
             byte[][] finalSignatures = new byte[count][];
-
-            //for (int i = 0; i < count; i++)
-            //{
+            for (int i = 0; i < count; i++)
             {
-                int i = 0;
-                //var timestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
                 var rawSignatures = new Span<byte>(new byte[BLSHerumi.SignatureLength * fractions[i].Length]);
                 var weights = new Span<int>(new int[fractions[i].Length]);
                 for (int j = 0; j < fractions[i].Length; j++)
@@ -164,17 +157,11 @@ namespace BLSTest
                 finalSignatures[i] = new byte[BLSHerumi.SignatureLength];
                 using var blsAggregate = new BLSHerumi(new BLSParameters());
                 blsAggregate.TryAggregateSignatures(rawSignatures, weights, finalSignatures[i], out var _);
-            } 
-           
-              
 
-                //Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(finalSignatures[i]).Replace("-", ""));
-                //Console.WriteLine(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - timestamp);
-            //}
-            
-            //Console.WriteLine(" Takes: " + timestamp/count);
-            //VerifyFinalSignature(count, overallLCM, finalSignatures);
-            //return finalSignatures;
+                Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(finalSignatures[i]).Replace("-", ""));
+            }
+            VerifyFinalSignature(count, overallLCM, finalSignatures);
+            return finalSignatures;
         }
 
         public void VerifyFinalSignature(int count, uint lcm, byte[][] finalSignatures)
@@ -210,7 +197,7 @@ namespace BLSTest
             //{
             //    throw new Exception("Final Signature verification failed!");
             //}
-            //Console.WriteLine("Final signature verified.");
+            Console.WriteLine("Final signature verified.");
         }
 
 
@@ -238,23 +225,20 @@ namespace BLSTest
         void Block42() { }
         public static void Main()
         {
-            //    var blstest = new BLS_N3(12, 5); // number of dishonest node is no more than f, therefore we only need signatures from f+1 CNs
+            var blstest = new BLSTest(7, 3); // number of dishonest node is no more than f, therefore we only need signatures from f+1 CNs
 
-            //    blstest.KeyDistribution();
+            blstest.KeyDistribution();
 
-            //    blstest.PublicKeysforSignatureDistribution();
+            blstest.PublicKeysforSignatureDistribution();
 
-            //    var sigs = blstest.GetSignatures();
+            var sigs = blstest.GetSignatures();
 
-            //    //Calculate final signature
-            //    Console.WriteLine("\n\n-----------------------------");
-            //    Console.WriteLine("Calculate final signature");
-            //    Console.WriteLine("-----------------------------\n");
+            //Calculate final signature
+            Console.WriteLine("\n\n-----------------------------");
+            Console.WriteLine("Calculate final signature");
+            Console.WriteLine("-----------------------------\n");
 
-            //    blstest.GetFinalSignatures(sigs);
+            blstest.GetFinalSignatures(sigs);
         }
     }
 }
-
-// security base... longer to process
-// wake security, but more efficient
