@@ -22,6 +22,7 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+!Benchmark/bin/Release/net6.0/BenchmarkDotNet.Artifacts\results\*
 
 # Visual Studio 2015 cache/options directory
 .vs/
