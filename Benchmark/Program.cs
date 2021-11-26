@@ -104,26 +104,26 @@ namespace Benchmarks
         public void BLS18() => bls18.GetSignatures();
 
 
-        BLS_N3 bls19 => init(19);
+        //BLS_N3 bls19 => init(19);
 
-        [Benchmark]
-        public void BLS19() => bls19.GetSignatures();
+        //[Benchmark]
+        //public void BLS19() => bls19.GetSignatures();
 
 
-        BLS_N3 bls20 => init(20);
+        //BLS_N3 bls20 => init(20);
 
-        [Benchmark]
-        public void BLS20() => bls20.GetSignatures();
+        //[Benchmark]
+        //public void BLS20() => bls20.GetSignatures();
 
-        BLS_N3 bls21 => init(21);
+        //BLS_N3 bls21 => init(21);
 
-        [Benchmark]
-        public void BLS21() => bls21.GetSignatures();
+        //[Benchmark]
+        //public void BLS21() => bls21.GetSignatures();
 
-        BLS_N3 bls22 => init(22);
+        //BLS_N3 bls22 => init(22);
 
-        [Benchmark]
-        public void BLS22() => bls22.GetSignatures();
+        //[Benchmark]
+        //public void BLS22() => bls22.GetSignatures();
 
         //Calculate final signature
         //Console.WriteLine("\n\n-----------------------------");

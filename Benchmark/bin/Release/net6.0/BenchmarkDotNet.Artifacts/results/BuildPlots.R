@@ -78,16 +78,27 @@ for (file in files) {
     group_by_(.dots = c("Target_Method", "Job_Id")) %>%
     summarise(se = std.error(Measurement_Value), Value = mean(Measurement_Value))
 
+  result$Target_Method <- factor(result$Target_Method, levels=c("BLS4", "BLS5","BLS6", "BLS7","BLS8", "BLS9",
+  "BLS10", "BLS11","BLS12", "BLS13","BLS14", "BLS15","BLS16", "BLS17","BLS18"), ordered=TRUE)
+
+  resultStats$Target_Method <- factor(resultStats$Target_Method, levels=c("BLS4", "BLS5","BLS6", "BLS7","BLS8", "BLS9",
+  "BLS10", "BLS11","BLS12", "BLS13","BLS14", "BLS15","BLS16", "BLS17","BLS18"), ordered=TRUE)
+
+SoilSciGuylabs <- c("4", "5", "6","7", "8", "9","10", "11", "12","13", "14", "15","16", "17", "18") 
+
   benchmarkBoxplot <- ggplot(result, aes(x=Target_Method, y=Measurement_Value, fill=Job_Id)) +
     guides(fill=guide_legend(title="Job")) +
-    xlab("Target") +
+    xlab("# BLS Node") +
     ylab(paste("Time,", timeUnit)) +
+    scale_x_discrete(labels= SoilSciGuylabs) +
     ggtitle(title) +
     geom_boxplot()
+
   benchmarkBarplot <- ggplot(resultStats, aes(x=Target_Method, y=Value, fill=Job_Id)) +
     guides(fill=guide_legend(title="Job")) +
-    xlab("Target") +
+    xlab("# BLS Node") +
     ylab(paste("Time,", timeUnit)) +
+      scale_x_discrete(labels= SoilSciGuylabs) +
     ggtitle(title) +
     geom_bar(position=position_dodge(), stat="identity")
     #geom_errorbar(aes(ymin=Value-1.96*se, ymax=Value+1.96*se), width=.2, position=position_dodge(.9))
