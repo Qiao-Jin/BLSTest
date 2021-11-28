@@ -11,10 +11,10 @@ namespace BLSTest
         private readonly uint m = 0;
         private readonly int index = -1;
         private readonly byte[] domain;
-
+        List<Fraction[]> fractions = null;// Utility.GetAllFractions(n, m);
         //Local secret key to generate shared private keys
         private List<byte[]> blsSecretKeys = new List<byte[]>();
-
+        uint overallLCM;
         // Shared private keys from peers to generate aggregated key
         private byte[][] collectedSharedPrivateKeys;
         private byte[][] collectedSharedPublicKeys;
@@ -25,7 +25,8 @@ namespace BLSTest
 
         private byte[][] aggregatedPublicKeysForSignature;
 
-
+        public List<byte[]> blsSignaturesFromPeer = new List<byte[]>();
+        public byte[] BLSFinalSignature;
         public int Index
         {
             get { return index; }
@@ -45,8 +46,22 @@ namespace BLSTest
             }
             collectedSharedPrivateKeys = new byte[n][];
             collectedSharedPublicKeys = new byte[n][];
-
+            fractions = Utility.GetAllFractions(n, m);
             aggregatedPublicKeysForSignature = new byte[n][];
+
+            int count = fractions.Count;
+            uint[] LCMs = new uint[count];
+            for (int i = 0; i < count; i++)
+            {
+                uint[] denominators = new uint[fractions[i].Length];
+                for (int j = 0; j < fractions[i].Length; j++)
+                {
+                    denominators[j] = fractions[i][j].denominator;
+                }
+                LCMs[i] = Utility.GetLCM(denominators);
+            }
+            overallLCM = Utility.GetLCM(LCMs);
+
         }
 
         private byte[] GeneratePrivateKeyFromRandom(int bits)
@@ -245,6 +260,36 @@ namespace BLSTest
                 throw new Exception("SharedPrivateKeys verification failed!");
             }
             //Console.WriteLine("Shared private keys verified...");
+        }
+
+        public byte[] GetAggregatedSignature()
+        {
+            var rawSignatures = new Span<byte>(new byte[BLSHerumi.SignatureLength * fractions[Index].Length]);
+            var weights = new Span<int>(new int[fractions[Index].Length]);
+            for (int j = 0; j < fractions[Index].Length; j++)
+            {
+                blsSignaturesFromPeer[(int)fractions[Index][j].id].CopyTo(rawSignatures.Slice(BLSHerumi.SignatureLength * j));
+                weights[j] = (int)(fractions[Index][j].numerator * (overallLCM / fractions[Index][j].denominator));
+                if (!fractions[Index][j].sign) weights[j] = -weights[j];
+            }
+            var finalSignature = new byte[BLSHerumi.SignatureLength];
+            using var blsAggregate = new BLSHerumi(new BLSParameters());
+            blsAggregate.TryAggregateSignatures(rawSignatures, weights, finalSignature, out var _);
+            BLSFinalSignature = finalSignature;
+            return finalSignature;
+        }
+
+        public void VerifAggregatedSignature(ReadOnlySpan<byte> msg, ReadOnlySpan<byte> domain)
+        {
+            using var signatureChecker = new BLSHerumi(new BLSParameters()
+            {
+                PublicKey = GetAggregatedPublicKey()
+            });
+
+            if (!signatureChecker.VerifyHash(msg, BLSFinalSignature, domain))
+            {
+                throw new Exception("Final Signature verification failed!");
+            }
         }
     }
 }

@@ -22,8 +22,8 @@ namespace BLSTest
         private readonly uint m = 0;
         private readonly uint[][] commonWeightSet;
         private readonly List<BLS_Node> nodes = new List<BLS_Node>();
-
-        private static IList<byte[]> Domains => new List<byte[]>
+        //Get coefficients for all possible combinations of consensus nodes
+        public static IList<byte[]> Domains => new List<byte[]>
         {
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 },
@@ -33,7 +33,7 @@ namespace BLSTest
             new byte[] { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
         };
 
-        private static IList<byte[]> MessageHashes => new List<byte[]>
+        public static IList<byte[]> MessageHashes => new List<byte[]>
         {
             Enumerable.Repeat((byte)0x00, BLSHerumi.HashLength).ToArray(),
             Enumerable.Repeat((byte)0x56, BLSHerumi.HashLength).ToArray(),
@@ -49,7 +49,6 @@ namespace BLSTest
             }
             this.n = n;
             this.m = m;
-
             commonWeightSet = new uint[n][];
             for (int i = 0; i < this.n; i++)
             {
@@ -59,7 +58,6 @@ namespace BLSTest
                 {
                     commonWeightSet[i][j] = (uint)(commonWeightSet[i][j - 1] * (i + 1));
                 }
-
                 nodes.Add(new BLS_Node(i, Domains[3], n, m));
             }
         }
@@ -103,21 +101,21 @@ namespace BLSTest
         /// Simulate the signature synchronization
         /// </summary>
         /// <returns>BLS signatures from each node</returns>
-        public byte[][] GetSignatures()
+        public void BLSSignaturesDistribution()
         {
             List<byte[]> sigs = new List<byte[]>();
             //Console.WriteLine("\n\nSignatures of Each Node:");
             foreach (var node in nodes)
             {
-                var timestamp = DateTime.Now.ToFileTime();
                 var sig = node.GetSignature(MessageHashes[0]);
-                 timestamp = DateTime.Now.ToFileTime()- timestamp;
                 //Console.WriteLine("[" + node.Index + "]: 0x" + BitConverter.ToString(sig).Replace("-", "") + " Takes: "+timestamp);
-
                 sigs.Add(sig);
+
+                for (int i = 0; i < n; i++)
+                {
+                    nodes[i].blsSignaturesFromPeer.Add(sig);
+                }
             }
-            //Console.WriteLine("\n");
-            return sigs.ToArray();
         }
 
         /// <summary>
@@ -125,93 +123,10 @@ namespace BLSTest
         /// </summary>
         /// <param name="signatures"> BLS signatures from each node</param>
         /// <returns></returns>
-        public void GetFinalSignatures(byte[][] signatures)
-        {
-            //Get coefficients for all possible combinations of consensus nodes
-            List<Fraction[]> fractions = Utility.GetAllFractions(n, m);
-            //Console.WriteLine("Coefficients for all possible consensus node combinations calculated: " + fractions.Count);
+        public void GetFinalSignatures()=> nodes[0].GetAggregatedSignature();
 
-            //Get LCM
-            int count = fractions.Count;
-            uint[] LCMs = new uint[count];
-            for (int i = 0; i < count; i++)
-            {
-                uint[] denominators = new uint[fractions[i].Length];
-                for (int j = 0; j < fractions[i].Length; j++)
-                {
-                    denominators[j] = fractions[i][j].denominator;
-                }
-                LCMs[i] = Utility.GetLCM(denominators);
-            }
 
-            uint overallLCM = Utility.GetLCM(LCMs);
-
-            byte[][] finalSignatures = new byte[count][];
-
-            //for (int i = 0; i < count; i++)
-            //{
-            {
-                int i = 0;
-                //var timestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-                var rawSignatures = new Span<byte>(new byte[BLSHerumi.SignatureLength * fractions[i].Length]);
-                var weights = new Span<int>(new int[fractions[i].Length]);
-                for (int j = 0; j < fractions[i].Length; j++)
-                {
-                    signatures[fractions[i][j].id].CopyTo(rawSignatures.Slice(BLSHerumi.SignatureLength * j));
-                    weights[j] = (int)(fractions[i][j].numerator * (overallLCM / fractions[i][j].denominator));
-                    if (!fractions[i][j].sign) weights[j] = -weights[j];
-                }
-                finalSignatures[i] = new byte[BLSHerumi.SignatureLength];
-                using var blsAggregate = new BLSHerumi(new BLSParameters());
-                blsAggregate.TryAggregateSignatures(rawSignatures, weights, finalSignatures[i], out var _);
-            } 
-           
-              
-
-                //Console.WriteLine("[" + i + "]: 0x" + BitConverter.ToString(finalSignatures[i]).Replace("-", ""));
-                //Console.WriteLine(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - timestamp);
-            //}
-            
-            //Console.WriteLine(" Takes: " + timestamp/count);
-            //VerifyFinalSignature(count, overallLCM, finalSignatures);
-            //return finalSignatures;
-        }
-
-        public void VerifyFinalSignature(int count, uint lcm, byte[][] finalSignatures)
-        {
-            //Check final signature
-            for (int i = 1; i < count; i++)
-            {
-                for (int j = 0; j < BLSHerumi.SignatureLength; j++)
-                {
-                    if (finalSignatures[i][j] != finalSignatures[0][j])
-                    {
-                        throw new Exception("Final Signature not the same!");
-                    }
-                }
-            }
-
-            //var rawPublicKeys = new Span<byte>(new byte[BLSHerumi.PublicKeyLength * n]);
-            //uint[] weightSetCheckingSignature = new uint[n];
-
-            //for (int k = 0; k < n; k++)
-            //{
-            //    publicKeysPublished[k][0].CopyTo(rawPublicKeys.Slice(k * BLSHerumi.PublicKeyLength));
-            //    weightSetCheckingSignature[k] = lcm;
-            //}
-            //using var publicKeyGenerator = new BLSHerumi(new BLSParameters());
-            //var publicKeyCheckingSignature = new byte[BLSHerumi.PublicKeyLength];
-            //publicKeyGenerator.TryAggregatePublicKeys(rawPublicKeys, weightSetCheckingSignature, publicKeyCheckingSignature, out var _);
-            //using var signatureChecker = new BLSHerumi(new BLSParameters()
-            //{
-            //    PublicKey = publicKeyCheckingSignature
-            //});
-            //if (!signatureChecker.VerifyHash(MessageHashes[2], finalSignatures[0], Domains[3]))
-            //{
-            //    throw new Exception("Final Signature verification failed!");
-            //}
-            //Console.WriteLine("Final signature verified.");
-        }
+        public void VerifyFinalSignature()=>nodes[0].VerifAggregatedSignature(MessageHashes[2], Domains[3]);
 
 
         void Block21(){ }

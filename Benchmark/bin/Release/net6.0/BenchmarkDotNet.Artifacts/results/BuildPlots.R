@@ -79,12 +79,12 @@ for (file in files) {
     summarise(se = std.error(Measurement_Value), Value = mean(Measurement_Value))
 
   result$Target_Method <- factor(result$Target_Method, levels=c("BLS4", "BLS5","BLS6", "BLS7","BLS8", "BLS9",
-  "BLS10", "BLS11","BLS12", "BLS13","BLS14", "BLS15","BLS16", "BLS17","BLS18"), ordered=TRUE)
+  "BLS10", "BLS11","BLS12", "BLS13"), ordered=TRUE)
 
   resultStats$Target_Method <- factor(resultStats$Target_Method, levels=c("BLS4", "BLS5","BLS6", "BLS7","BLS8", "BLS9",
-  "BLS10", "BLS11","BLS12", "BLS13","BLS14", "BLS15","BLS16", "BLS17","BLS18"), ordered=TRUE)
+  "BLS10", "BLS11","BLS12", "BLS13"), ordered=TRUE)
 
-  SoilSciGuylabs <- c("4", "5", "6","7", "8", "9","10", "11", "12","13", "14", "15","16", "17", "18") 
+  SoilSciGuylabs <- c("4", "5", "6","7", "8", "9","10", "11", "12","13") 
 
   benchmarkBoxplot <- ggplot(result, aes(x=Target_Method, y=Measurement_Value, fill=Job_Id)) +
     # guides(fill=guide_legend(title="Execution Time")) +
@@ -116,7 +116,7 @@ for (file in files) {
 # str(resultStats)
   benchmarkBarplot <- ggplot(resultStats, aes(x=Target_Method, y=Value, fill=Job_Id)) +
     # guides(fill=guide_legend(title="Execution Time")) +
-     theme(legend.position = 'none')+
+    theme(legend.position = 'none')+
     xlab("# BLS Node") +
     ylab(paste("BLS Aggregation Time (log),", timeUnit)) +
     scale_x_discrete(labels= SoilSciGuylabs) +
@@ -124,101 +124,99 @@ for (file in files) {
     scale_y_continuous(trans='log2')+
     ggtitle(title) +
     geom_bar(position=position_dodge(), stat="identity",fill="steelblue")+
+    geom_text(aes(label=round(Value,digits=0)), position=position_dodge(width=0.9), vjust=-0.25)+
     geom_errorbar(aes(ymin=Value-se, ymax=Value+se), width=.2,
                  position=position_dodge(.9)) 
-    #geom_errorbar(aes(ymin=Value-1.96*se, ymax=Value+1.96*se), width=.2, position=position_dodge(.9))
 
   printNice(benchmarkBoxplot)
   printNice(benchmarkBarplot)
-  # printNice(benchmarkLineplot)
   ggsaveNice(gsub("-measurements.csv", "-boxplot.png", file), benchmarkBoxplot)
   ggsaveNice(gsub("-measurements.csv", "-barplot.png", file), benchmarkBarplot)
-  # ggsaveNice(gsub("-measurements.csv", "-lineplot.png", file), benchmarkLineplot)
 
-  # for (target in unique(result$Target_Method)) {
-  #   df <- result %>% filter(Target_Method == target)
-  #   df$Launch <- factor(df$Measurement_LaunchIndex)
-  #   df <- df %>% group_by(Job_Id, Launch) %>% mutate(cm = cummean(Measurement_Value))
+  for (target in unique(result$Target_Method)) {
+    df <- result %>% filter(Target_Method == target)
+    df$Launch <- factor(df$Measurement_LaunchIndex)
+    df <- df %>% group_by(Job_Id, Launch) %>% mutate(cm = cummean(Measurement_Value))
 
-  #   densityPlot <- ggplot(df, aes(x=Measurement_Value, fill=Job_Id)) +
-  #     ggtitle(paste(title, "/", target)) +
-  #     xlab(paste("Time,", timeUnit)) +
-  #     geom_density(alpha=.5, bw="SJ")
-  #   printNice(densityPlot)
-  #   ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-density.png"), file), densityPlot)
+    densityPlot <- ggplot(df, aes(x=Measurement_Value, fill=Job_Id)) +
+      ggtitle(paste(title, "/", target)) +
+      xlab(paste("Time,", timeUnit)) +
+      geom_density(alpha=.5, bw="SJ")
+    printNice(densityPlot)
+    ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-density.png"), file), densityPlot)
 
-  #   facetDensityPlot <- densityPlot + facet_wrap(~Job_Id)
-  #   printNice(facetDensityPlot)
-  #   ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-facetDensity.png"), file), facetDensityPlot)
+    facetDensityPlot <- densityPlot + facet_wrap(~Job_Id)
+    printNice(facetDensityPlot)
+    ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-facetDensity.png"), file), facetDensityPlot)
 
-  #   for (params in unique(df$Params)) {
-  #     paramsDf <- df %>% filter(Params == params)
-  #     paramsDensityPlot <- ggplot(paramsDf, aes(x=Measurement_Value, fill=Job_Id)) +
-  #       ggtitle(paste(title, "/", target, "/", params)) +
-  #       xlab(paste("Time,", timeUnit)) +
-  #       geom_density(alpha=.5, bw="SJ")
-  #     printNice(paramsDensityPlot)
-  #     prefix <- createPrefix(c(target,params))
-  #     ggsaveNice(gsub("-measurements.csv", paste0(prefix, "-density.png"), file), paramsDensityPlot)
+    for (params in unique(df$Params)) {
+      paramsDf <- df %>% filter(Params == params)
+      paramsDensityPlot <- ggplot(paramsDf, aes(x=Measurement_Value, fill=Job_Id)) +
+        ggtitle(paste(title, "/", target, "/", params)) +
+        xlab(paste("Time,", timeUnit)) +
+        geom_density(alpha=.5, bw="SJ")
+      printNice(paramsDensityPlot)
+      prefix <- createPrefix(c(target,params))
+      ggsaveNice(gsub("-measurements.csv", paste0(prefix, "-density.png"), file), paramsDensityPlot)
 
-  #     paramsFacetDensityPlot <- paramsDensityPlot + facet_wrap(~Job_Id)
-  #     printNice(paramsFacetDensityPlot)
-  #     ggsaveNice(gsub("-measurements.csv", paste0(prefix, "-facetDensity.png"), file), paramsFacetDensityPlot)
-  #   }
+      paramsFacetDensityPlot <- paramsDensityPlot + facet_wrap(~Job_Id)
+      printNice(paramsFacetDensityPlot)
+      ggsaveNice(gsub("-measurements.csv", paste0(prefix, "-facetDensity.png"), file), paramsFacetDensityPlot)
+    }
 
-  #   for (job in unique(df$Job_Id)) {
-  #     jobDf <- df %>% filter(Job_Id == job)
-  #     timelinePlot <- ggplot(jobDf, aes(x = Measurement_IterationIndex, y=Measurement_Value, group=Launch, color=Launch)) +
-  #       ggtitle(paste(title, "/", target, "/", job)) +
-  #       xlab("IterationIndex") +
-  #       ylab(paste("Time,", timeUnit)) +
-  #       geom_line() +
-  #       geom_point()
-  #     printNice(timelinePlot)
-  #     ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-", job, "-timeline.png"), file), timelinePlot)
-  #     timelinePlotSmooth <- timelinePlot + geom_smooth()
-  #     printNice(timelinePlotSmooth)
-  #     ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-", job, "-timelineSmooth.png"), file), timelinePlotSmooth)
+    for (job in unique(df$Job_Id)) {
+      jobDf <- df %>% filter(Job_Id == job)
+      timelinePlot <- ggplot(jobDf, aes(x = Measurement_IterationIndex, y=Measurement_Value, group=Launch, color=Launch)) +
+        ggtitle(paste(title, "/", target, "/", job)) +
+        xlab("IterationIndex") +
+        ylab(paste("Time,", timeUnit)) +
+        geom_line() +
+        geom_point()
+      printNice(timelinePlot)
+      ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-", job, "-timeline.png"), file), timelinePlot)
+      timelinePlotSmooth <- timelinePlot + geom_smooth()
+      printNice(timelinePlotSmooth)
+      ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-", job, "-timelineSmooth.png"), file), timelinePlotSmooth)
 
-  #     cummeanPlot <- ggplot(jobDf, aes(x = Measurement_IterationIndex, y=cm, group=Launch, color=Launch)) +
-  #       ggtitle(paste(title, "/", target, "/", job)) +
-  #       xlab("IterationIndex") +
-  #       ylab(paste("Cumulative mean time,", timeUnit)) +
-  #       geom_line() +
-  #       geom_point()
-  #     printNice(cummeanPlot)
-  #     ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-", job, "-cummean.png"), file), cummeanPlot)
+      cummeanPlot <- ggplot(jobDf, aes(x = Measurement_IterationIndex, y=cm, group=Launch, color=Launch)) +
+        ggtitle(paste(title, "/", target, "/", job)) +
+        xlab("IterationIndex") +
+        ylab(paste("Cumulative mean time,", timeUnit)) +
+        geom_line() +
+        geom_point()
+      printNice(cummeanPlot)
+      ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-", job, "-cummean.png"), file), cummeanPlot)
 
 
-  #     densityPlotJob <- ggplot(jobDf, aes(x=Measurement_Value, fill="red")) +
-  #       ggtitle(paste(title, "/", target, "/", job)) +
-  #       xlab(paste("Time,", timeUnit)) +
-  #       geom_density(alpha=.5, bw="SJ")
-  #     printNice(densityPlotJob)
-  #     ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-", job, "-density.png"), file), densityPlotJob)
-  #   }
+      densityPlotJob <- ggplot(jobDf, aes(x=Measurement_Value, fill="red")) +
+        ggtitle(paste(title, "/", target, "/", job)) +
+        xlab(paste("Time,", timeUnit)) +
+        geom_density(alpha=.5, bw="SJ")
+      printNice(densityPlotJob)
+      ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-", job, "-density.png"), file), densityPlotJob)
+    }
 
-  #   timelinePlot <- ggplot(df, aes(x = Measurement_IterationIndex, y=Measurement_Value, group=Launch, color=Launch)) +
-  #     ggtitle(paste(title, "/", target)) +
-  #     xlab("IterationIndex") +
-  #     ylab(paste("Time,", timeUnit)) +
-  #     geom_line() +
-  #     geom_point() +
-  #     facet_wrap(~Job_Id)
-  #   printNice(timelinePlot)
-  #   ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-facetTimeline.png"), file), timelinePlot)
-  #   timelinePlotSmooth <- timelinePlot + geom_smooth()
-  #   printNice(timelinePlotSmooth)
-  #   ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-facetTimelineSmooth.png"), file), timelinePlotSmooth)
+    timelinePlot <- ggplot(df, aes(x = Measurement_IterationIndex, y=Measurement_Value, group=Launch, color=Launch)) +
+      ggtitle(paste(title, "/", target)) +
+      xlab("IterationIndex") +
+      ylab(paste("Time,", timeUnit)) +
+      geom_line() +
+      geom_point() +
+      facet_wrap(~Job_Id)
+    printNice(timelinePlot)
+    ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-facetTimeline.png"), file), timelinePlot)
+    timelinePlotSmooth <- timelinePlot + geom_smooth()
+    printNice(timelinePlotSmooth)
+    ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-facetTimelineSmooth.png"), file), timelinePlotSmooth)
 
-  #   facetCummeanPlot <- ggplot(df, aes(x = Measurement_IterationIndex, y=cm, group=Launch, color=Launch)) +
-  #     ggtitle(paste(title, "/", target)) +
-  #     xlab("IterationIndex") +
-  #     ylab(paste("Cumulative mean time,", timeUnit)) +
-  #     geom_line() +
-  #     geom_point() +
-  #     facet_wrap(~Job_Id)
-  #   printNice(facetCummeanPlot)
-  #   ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-cummean.png"), file), facetCummeanPlot)
-  # }
+    facetCummeanPlot <- ggplot(df, aes(x = Measurement_IterationIndex, y=cm, group=Launch, color=Launch)) +
+      ggtitle(paste(title, "/", target)) +
+      xlab("IterationIndex") +
+      ylab(paste("Cumulative mean time,", timeUnit)) +
+      geom_line() +
+      geom_point() +
+      facet_wrap(~Job_Id)
+    printNice(facetCummeanPlot)
+    ggsaveNice(gsub("-measurements.csv", paste0("-", target, "-cummean.png"), file), facetCummeanPlot)
+  }
 }
